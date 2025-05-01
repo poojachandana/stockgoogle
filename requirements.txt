@@ -4,4 +4,4 @@ numpy
 matplotlib
 scikit-learn
 tensorflow
-alpha_vantage
+yahoo_fin

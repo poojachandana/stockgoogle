@@ -4,4 +4,4 @@ numpy
 matplotlib
 scikit-learn
 tensorflow
-yahoo_fin
+yfinance

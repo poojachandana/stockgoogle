@@ -1,10 +1,8 @@
-# google_stock_predictor_yfinance.py
-
 import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import yfinance as yf
+import quandl  # Import Quandl
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from tensorflow.keras.models import Sequential
@@ -15,16 +13,20 @@ import datetime
 st.title("📊 Google Stock Price Prediction App")
 st.markdown("This app uses RNN, LSTM, and Hybrid models to predict Google Stock Prices based on historical data.")
 
+# Quandl API Key
+quandl.ApiConfig.api_key = "yYvU7cb-2PRXQdNbM9fE"  # Replace with your Quandl API key
+
 # Date input
 start_date = st.date_input('📅 Start Date', value=pd.to_datetime('2015-01-01'))
 end_date = st.date_input('📅 End Date', value=pd.to_datetime('2024-01-01'))
 predict_days = st.number_input("🔮 Number of Days to Predict", min_value=1, max_value=100, value=30)
 model_option = st.selectbox("🧠 Select Model", ("RNN", "LSTM", "Hybrid (LSTM + RNN)"))
 
-# Fetch Google stock data using yfinance
+# Fetch Google stock data from Quandl
 try:
-    df = yf.download("GOOGL", start=start_date, end=end_date)
-    df = df[['Close']].copy()
+    # Get Google stock data from Quandl's WIKI dataset (you can also use 'GOOGL' or other tickers)
+    df = quandl.get("WIKI/AAPL", start_date=start_date, end_date=end_date)  # Replace "AAPL" with "GOOGL" for Google
+    df = df[['Adj. Close']].copy()  # Using 'Adj. Close' for adjusted closing price
     df.dropna(inplace=True)
     df.columns = ['Close']
     df.index = pd.to_datetime(df.index)
@@ -36,7 +38,7 @@ try:
     st.write("✅ Showing last 5 rows of data:", df.tail())
 
 except Exception as e:
-    st.error(f"❌ Failed to fetch data from Yahoo Finance: {e}")
+    st.error(f"❌ Failed to fetch data from Quandl: {e}")
     st.stop()
 
 # Normalize the data

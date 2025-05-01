@@ -4,7 +4,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import yfinance as yf
+from alpha_vantage.timeseries import TimeSeries
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from tensorflow.keras.models import Sequential
@@ -23,10 +23,28 @@ predict_days = st.number_input("Number of Days to Predict", min_value=1, max_val
 # User input: Select model
 model_option = st.selectbox("Select Model", ("RNN", "LSTM", "Hybrid (LSTM + RNN)"))
 
-# Fetch Google stock data
-df = yf.download('GOOGL', start=start_date, end=end_date)
-df = df[['Close']].dropna()
-st.write("Showing last 5 rows:", df.tail())
+# Fetch Google stock data using Alpha Vantage
+api_key = "Z5ER4KYQHP8SH798"
+ts = TimeSeries(key=api_key, output_format='pandas')
+
+try:
+    data, meta_data = ts.get_daily(symbol='GOOGL', outputsize='full')
+    df = data[['4. close']]
+    df.columns = ['Close']
+    df.index = pd.to_datetime(df.index)
+    df.sort_index(inplace=True)
+
+    # Filter by selected date range
+    df = df[(df.index >= pd.to_datetime(start_date)) & (df.index <= pd.to_datetime(end_date))]
+
+    if df.empty:
+        st.error("❌ No data found for the selected date range.")
+        st.stop()
+
+    st.write("Showing last 5 rows:", df.tail())
+except Exception as e:
+    st.error(f"❌ Failed to fetch data from Alpha Vantage: {e}")
+    st.stop()
 
 # Normalize the data
 scaler = MinMaxScaler()

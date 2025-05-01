@@ -1,22 +1,38 @@
-import os
-import requests
+import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import yfinance as yf
+import requests
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, LSTM, SimpleRNN
 import datetime
-import streamlit as st
 
-# Retrieve the API key from environment variables
-api_key = os.getenv('TWELVE_API_KEY')
+# Add your API key directly into the code
+TWELVE_API_KEY = 'e1f40d0bd71244fab6c97cc18f637fc1'
 
-if api_key is None:
-    st.error("❌ API Key is missing. Please set the TWELVE_API_KEY environment variable.")
-    st.stop()
+# Function to fetch stock data from Twelve Data
+def get_stock_data(symbol, start_date, end_date, api_key):
+    url = f'https://api.twelvedata.com/time_series'
+    params = {
+        'symbol': symbol,
+        'interval': '1day',  # You can change the interval if needed (e.g., '1min', '1h', '1day', etc.)
+        'start_date': start_date,
+        'end_date': end_date,
+        'apikey': api_key
+    }
+    response = requests.get(url, params=params)
+    data = response.json()
+    if 'values' in data:
+        df = pd.DataFrame(data['values'])
+        df['datetime'] = pd.to_datetime(df['datetime'])
+        df.set_index('datetime', inplace=True)
+        df['close'] = pd.to_numeric(df['close'])
+        return df[['close']]
+    else:
+        st.error("❌ Failed to fetch stock data.")
+        return None
 
 # Streamlit App Title and Info
 st.title("📊 Google Stock Price Prediction App")
@@ -28,22 +44,18 @@ end_date = st.date_input('📅 End Date', value=pd.to_datetime('2024-01-01'))
 predict_days = st.number_input("🔮 Number of Days to Predict", min_value=1, max_value=100, value=30)
 model_option = st.selectbox("🧠 Select Model", ("RNN", "LSTM", "Hybrid (LSTM + RNN)"))
 
-# Fetch Google stock data using yfinance
+# Fetch Google stock data using Twelve Data API
 try:
-    df = yf.download("GOOGL", start=start_date, end=end_date)
-    df = df[['Close']].copy()
-    df.dropna(inplace=True)
-    df.columns = ['Close']
-    df.index = pd.to_datetime(df.index)
-
-    if df.empty:
+    df = get_stock_data("GOOGL", start_date, end_date, TWELVE_API_KEY)
+    
+    if df is None or df.empty:
         st.error("❌ No data found for the selected date range.")
         st.stop()
 
     st.write("✅ Showing last 5 rows of data:", df.tail())
 
 except Exception as e:
-    st.error(f"❌ Failed to fetch data from Yahoo Finance: {e}")
+    st.error(f"❌ Failed to fetch data: {e}")
     st.stop()
 
 # Normalize the data

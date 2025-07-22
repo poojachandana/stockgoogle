@@ -2,8 +2,7 @@
 
 This project is a Google Stock Price Prediction App that leverages Recurrent Neural Networks (RNN), Long Short-Term Memory (LSTM), and a Hybrid RNN + LSTM model to predict future stock prices using historical data from the Twelve Data API.
 
-🚀 Live App: Click to Try the App
-
+🚀 Live App: https://stockappgoogl.streamlit.app/
 📌 Features
 📥 Fetches historical Google stock data using Twelve Data API
 
